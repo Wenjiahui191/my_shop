@@ -27,7 +27,8 @@ const resetForm = () => {
 const loadTree = async () => {
   loading.value = true;
   try {
-    treeData.value = await fetchCategoryTree();
+    const res = await fetchCategoryTree();
+    treeData.value = res.data;
   } finally {
     loading.value = false;
   }

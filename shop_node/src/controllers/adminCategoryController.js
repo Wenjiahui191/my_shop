@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 exports.getCategories = async (req, res) => {
   try {
@@ -22,9 +23,9 @@ exports.getCategories = async (req, res) => {
       }
     });
 
-    res.json(tree);
+    response.success(res, tree, '获取成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -35,9 +36,9 @@ exports.createCategory = async (req, res) => {
       'INSERT INTO categories (name, parent_id, image_url, sort_order) VALUES (?, ?, ?, ?)',
       [name, parent_id || null, image_url, sort_order || 0]
     );
-    res.status(201).json({ id: result.insertId, message: '分类创建成功' });
+    response.created(res, { id: result.insertId }, '分类创建成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -49,9 +50,9 @@ exports.updateCategory = async (req, res) => {
       'UPDATE categories SET name = ?, parent_id = ?, image_url = ?, sort_order = ? WHERE id = ?',
       [name, parent_id || null, image_url, sort_order || 0, id]
     );
-    res.json({ message: '分类更新成功' });
+    response.success(res, null, '分类更新成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -61,18 +62,18 @@ exports.deleteCategory = async (req, res) => {
     // 检查是否存在子分类
     const [subcats] = await db.query('SELECT id FROM categories WHERE parent_id = ?', [id]);
     if (subcats.length > 0) {
-      return res.status(400).json({ error: '存在子分类，无法删除' });
+      return response.error(res, '存在子分类，无法删除', 400);
     }
 
     // 检查是否关联商品
     const [products] = await db.query('SELECT id FROM products WHERE category_id = ?', [id]);
     if (products.length > 0) {
-      return res.status(400).json({ error: '分类下存在商品，无法删除' });
+      return response.error(res, '分类下存在商品，无法删除', 400);
     }
 
     await db.query('DELETE FROM categories WHERE id = ?', [id]);
-    res.json({ message: '分类删除成功' });
+    response.success(res, null, '分类删除成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

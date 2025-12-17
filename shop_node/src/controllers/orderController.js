@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 // 生成唯一订单号
 const generateOrderNo = () => {
@@ -27,7 +28,7 @@ exports.createOrder = async (req, res) => {
 
     if (cartItems.length === 0) {
       await connection.rollback();
-      return res.status(400).json({ message: '购物车为空' });
+      return response.error(res, '购物车为空', 400);
     }
 
     // 2. 校验库存并计算总价
@@ -35,7 +36,7 @@ exports.createOrder = async (req, res) => {
     for (const item of cartItems) {
       if (item.stock < item.quantity) {
         await connection.rollback();
-        return res.status(400).json({ message: `商品 ${item.name} 库存不足` });
+        return response.error(res, `商品 ${item.name} 库存不足`, 400);
       }
       totalAmount += parseFloat(item.price) * item.quantity;
     }
@@ -48,7 +49,7 @@ exports.createOrder = async (req, res) => {
 
     if (addresses.length === 0) {
       await connection.rollback();
-      return res.status(400).json({ message: '收货地址无效' });
+      return response.error(res, '收货地址无效', 400);
     }
     const addressSnapshot = addresses[0];
 
@@ -79,16 +80,12 @@ exports.createOrder = async (req, res) => {
 
     await connection.commit();
 
-    res.status(201).json({ 
-      message: '订单创建成功', 
-      order_id: orderId,
-      order_no: orderNo
-    });
+    response.created(res, { order_id: orderId, order_no: orderNo }, '订单创建成功');
 
   } catch (error) {
     await connection.rollback();
     console.error('创建订单出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   } finally {
     connection.release();
   }
@@ -114,16 +111,31 @@ exports.getOrders = async (req, res) => {
     // Get items for each order
     for (const order of orders) {
       const [items] = await db.query(
-        'SELECT * FROM order_items WHERE order_id = ?',
+        `SELECT oi.id, oi.order_id, oi.product_id, oi.price, oi.quantity, 
+                p.id as product_id_full, p.name, p.price as product_price
+         FROM order_items oi 
+         JOIN products p ON oi.product_id = p.id 
+         WHERE oi.order_id = ?`,
         [order.id]
       );
-      order.items = items;
+      order.OrderItems = items.map(item => ({
+        id: item.id,
+        order_id: item.order_id,
+        product_id: item.product_id,
+        price: item.price,
+        quantity: item.quantity,
+        Product: {
+          id: item.product_id_full,
+          name: item.name,
+          price: item.product_price
+        }
+      }));
     }
 
-    res.json(orders);
+    response.success(res, orders, '获取成功');
   } catch (error) {
     console.error('查询订单列表出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -138,7 +150,7 @@ exports.getOrderById = async (req, res) => {
     );
 
     if (orders.length === 0) {
-      return res.status(404).json({ message: '订单不存在' });
+      return response.notFound(res, '订单不存在');
     }
 
     const order = orders[0];
@@ -146,12 +158,12 @@ exports.getOrderById = async (req, res) => {
       'SELECT * FROM order_items WHERE order_id = ?',
       [order.id]
     );
-    order.items = items;
+    order.OrderItems = items;
 
-    res.json(order);
+    response.success(res, order, '获取成功');
   } catch (error) {
     console.error('查询订单详情出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -171,14 +183,14 @@ exports.cancelOrder = async (req, res) => {
 
     if (orders.length === 0) {
       await connection.rollback();
-      return res.status(404).json({ message: '订单不存在' });
+      return response.notFound(res, '订单不存在');
     }
 
     const order = orders[0];
 
     if (order.status !== 'pending') {
       await connection.rollback();
-      return res.status(400).json({ message: '当前状态不可取消订单' });
+      return response.error(res, '当前状态不可取消订单', 400);
     }
 
     // 恢复库存
@@ -201,12 +213,12 @@ exports.cancelOrder = async (req, res) => {
     );
 
     await connection.commit();
-    res.json({ message: '订单取消成功' });
+    response.success(res, null, '订单取消成功');
 
   } catch (error) {
     await connection.rollback();
     console.error('取消订单出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   } finally {
     connection.release();
   }

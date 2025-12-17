@@ -1,19 +1,14 @@
 const db = require('../config/db');
 const redisClient = require('../config/redis');
+const response = require('../utils/response');
 
 exports.checkDbConnection = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT 1 + 1 AS solution');
-    res.json({
-      message: '数据库连接成功',
-      result: rows[0].solution
-    });
+    response.success(res, { result: rows[0].solution }, '数据库连接成功');
   } catch (error) {
     console.error('数据库连接错误:', error);
-    res.status(500).json({
-      message: '数据库连接失败',
-      error: error.message
-    });
+    response.error(res, '数据库连接失败', 500, error);
   }
 };
 
@@ -21,15 +16,9 @@ exports.checkRedisConnection = async (req, res) => {
   try {
     await redisClient.set('test_key', '你好 Redis');
     const value = await redisClient.get('test_key');
-    res.json({
-      message: 'Redis 连接成功',
-      result: value
-    });
+    response.success(res, { result: value }, 'Redis 连接成功');
   } catch (error) {
     console.error('Redis 连接错误:', error);
-    res.status(500).json({
-      message: 'Redis 连接失败',
-      error: error.message
-    });
+    response.error(res, 'Redis 连接失败', 500, error);
   }
 };

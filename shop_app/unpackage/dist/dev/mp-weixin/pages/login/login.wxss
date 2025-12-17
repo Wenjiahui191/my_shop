@@ -1,0 +1,13 @@
+
+.container { padding: 50px 20px;
+}
+.title { font-size: 24px; font-weight: bold; margin-bottom: 30px; text-align: center;
+}
+.form-item { margin-bottom: 20px; border-bottom: 1px solid #eee; padding: 10px 0;
+}
+.input { width: 100%;
+}
+.btn { background-color: #3cc51f; color: #fff; margin-top: 30px;
+}
+.link { text-align: center; margin-top: 20px; color: #666; font-size: 14px;
+}

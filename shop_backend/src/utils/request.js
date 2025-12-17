@@ -48,12 +48,22 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     removePending(response.config);
-    return response.data;
+    const { code, message, data,pagination={} } = response.data;
+    
+    // 检查业务级错误码
+    if (code && code >= 400) {
+      ElMessage.error(message || '请求失败');
+      return Promise.reject(new Error(message || '请求失败'));
+    }
+    
+    // 成功响应，返回 data 数据
+    return {data,pagination};
   },
   (error) => {
     const auth = useAuthStore();
     const status = error.response?.status;
-    const message = error.response?.data?.error || error.response?.data?.message || error.message;
+    const errorData = error.response?.data;
+    const message = errorData?.message || errorData?.error || error.message;
 
     if (axios.isCancel(error)) {
       return Promise.reject(error);

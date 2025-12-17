@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, updateProductStatus, fetchProductDetail } from '../api/products';
 import { fetchCategoryTree } from '../api/categories';
+import { uploadFile } from '../api/upload';
 
 const state = reactive({
   list: [],
@@ -15,6 +16,8 @@ const categories = ref([]);
 const dialogVisible = ref(false);
 const isEdit = ref(false);
 const saving = ref(false);
+const uploading = ref(false);
+const filePath=import.meta.env.VITE_FILE_BASE || '';
 
 const form = reactive({
   id: null,
@@ -34,7 +37,7 @@ const categoryOptions = computed(() => {
 });
 
 const loadCategories = async () => {
-  categories.value = await fetchCategoryTree();
+  categories.value = (await fetchCategoryTree()).data;
 };
 
 const loadProducts = async () => {
@@ -77,11 +80,15 @@ const openCreate = () => {
 
 const openEdit = async (row) => {
   resetForm();
-  const detail = await fetchProductDetail(row.id);
-  Object.assign(form, detail);
-  form.id = row.id;
-  isEdit.value = true;
-  dialogVisible.value = true;
+  try {
+    const detail = await fetchProductDetail(row.id);
+    Object.assign(form, detail);
+    form.id = row.id;
+    isEdit.value = true;
+    dialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取商品详情失败');
+  }
 };
 
 const resetForm = () => {
@@ -93,6 +100,38 @@ const resetForm = () => {
   form.stock = 0;
   form.image_url = '';
   form.status = 'on_shelf';
+};
+
+const handleUploadImage = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  // 验证文件类型
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('请上传图片文件（jpg, png, gif, webp）');
+    event.target.value = '';
+    return;
+  }
+
+  // 验证文件大小（最大 5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB');
+    event.target.value = '';
+    return;
+  }
+
+  uploading.value = true;
+  try {
+    const result = (await uploadFile(file)).data;
+    form.image_url = result.url;
+    ElMessage.success('图片上传成功');
+  } catch (error) {
+    ElMessage.error('图片上传失败');
+  } finally {
+    uploading.value = false;
+    event.target.value = '';
+  }
 };
 
 const submit = async () => {
@@ -224,8 +263,26 @@ onMounted(() => {
         <el-form-item label="库存">
           <el-input-number v-model="form.stock" :min="0" controls-position="right" />
         </el-form-item>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.image_url" placeholder="可选" />
+        <el-form-item label="商品图片">
+          <div class="image-upload-container">
+            <div v-if="form.image_url" class="image-preview">
+              <img :src="filePath + form.image_url" :alt="form.name" />
+              <el-button type="danger" size="small" @click="form.image_url = ''">删除</el-button>
+            </div>
+            <div v-else class="upload-button">
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="handleUploadImage"
+              />
+              <el-button :loading="uploading" @click="$refs.fileInput?.click()">
+                {{ uploading ? '上传中...' : '点击上传图片' }}
+              </el-button>
+              <p class="upload-tip">支持 jpg, png, gif, webp（最大 5MB）</p>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" style="width: 160px">
@@ -267,6 +324,36 @@ onMounted(() => {
   margin-top: 12px;
   display: flex;
   justify-content: flex-end;
+}
+
+.image-upload-container {
+  width: 100%;
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+}
+
+.upload-button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin: 0;
 }
 </style>
 

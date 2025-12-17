@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 exports.getCategories = async (req, res) => {
   try {
@@ -20,10 +21,10 @@ exports.getCategories = async (req, res) => {
       }
     });
 
-    res.json(tree);
+    response.success(res, tree, '获取成功');
   } catch (error) {
     console.error('获取分类出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -67,18 +68,15 @@ exports.getProducts = async (req, res) => {
     const [countResult] = await db.query(countQuery, countParams);
     const total = countResult[0].total;
 
-    res.json({
-      data: products,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
-      }
+    response.success(res, products, '获取成功', 200, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      pages: Math.ceil(total / limit)
     });
   } catch (error) {
     console.error('获取商品列表出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -87,12 +85,12 @@ exports.getProductById = async (req, res) => {
     const [products] = await db.query('SELECT * FROM products WHERE id = ?', [req.params.id]);
 
     if (products.length === 0) {
-      return res.status(404).json({ message: '商品不存在' });
+      return response.notFound(res, '商品不存在');
     }
 
-    res.json(products[0]);
+    response.success(res, products[0], '获取成功');
   } catch (error) {
     console.error('获取商品详情出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

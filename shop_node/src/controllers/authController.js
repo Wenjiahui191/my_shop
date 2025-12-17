@@ -2,6 +2,7 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const response = require('../utils/response');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 const WECHAT_APPID = process.env.WECHAT_APPID;
@@ -18,7 +19,7 @@ exports.register = async (req, res) => {
     );
 
     if (existingUsers.length > 0) {
-      return res.status(400).json({ message: '用户已存在' });
+      return response.error(res, '用户已存在', 400);
     }
 
     // 加密密码
@@ -38,11 +39,7 @@ exports.register = async (req, res) => {
       expiresIn: '7d'
     });
 
-    res.status(201).json({
-      message: '注册成功',
-      token,
-      user: { id: userId, username, phone, nickname }
-    });
+    response.created(res, { token, user: { id: userId, username, phone, nickname } }, '注册成功');
   } catch (error) {
     console.error('注册出错:', error);
     res.status(500).json({ message: '服务器错误', error: error.message });
@@ -59,7 +56,7 @@ exports.login = async (req, res) => {
     ]);
 
     if (users.length === 0) {
-      return res.status(400).json({ message: '账号或密码错误' });
+      return response.error(res, '账号或密码错误', 400);
     }
 
     const user = users[0];
@@ -68,7 +65,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: '账号或密码错误' });
+      return response.error(res, '账号或密码错误', 400);
     }
 
     // 生成令牌
@@ -76,8 +73,7 @@ exports.login = async (req, res) => {
       expiresIn: '7d'
     });
 
-    res.json({
-      message: '登录成功',
+    response.success(res, {
       token,
       user: {
         id: user.id,
@@ -86,10 +82,10 @@ exports.login = async (req, res) => {
         nickname: user.nickname,
         avatar_url: user.avatar_url
       }
-    });
+    }, '登录成功');
   } catch (error) {
     console.error('登录出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -101,13 +97,13 @@ exports.getMe = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(404).json({ message: '用户不存在' });
+      return response.notFound(res, '用户不存在');
     }
 
-    res.json(users[0]);
+    response.success(res, users[0], '获取成功');
   } catch (error) {
     console.error('获取用户信息出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -115,13 +111,11 @@ exports.wechatLogin = async (req, res) => {
   const { code, nickname, avatar_url } = req.body;
 
   if (!code) {
-    return res.status(400).json({ message: '缺少微信登录 code' });
+    return response.error(res, '缺少微信登录 code', 400);
   }
 
   if (!WECHAT_APPID || !WECHAT_SECRET) {
-    return res
-      .status(500)
-      .json({ message: '微信小程序配置缺失，请检查 WECHAT_APPID/WECHAT_SECRET' });
+    return response.error(res, '微信小程序配置缺失，请检查 WECHAT_APPID/WECHAT_SECRET', 500);
   }
 
   try {
@@ -140,9 +134,7 @@ exports.wechatLogin = async (req, res) => {
     const data = wechatRes.data;
 
     if (!data.openid) {
-      return res
-        .status(400)
-        .json({ message: '微信登录失败', error: data.errmsg || '未知错误' });
+      return response.error(res, '微信登录失败', 400, data.errmsg || '未知错误');
     }
 
     const openid = data.openid;
@@ -191,8 +183,7 @@ exports.wechatLogin = async (req, res) => {
       }
     );
 
-    res.json({
-      message: '登录成功',
+    response.success(res, {
       token,
       user: {
         id: user.id,
@@ -201,9 +192,9 @@ exports.wechatLogin = async (req, res) => {
         nickname: user.nickname,
         avatar_url: user.avatar_url
       }
-    });
+    }, '登录成功');
   } catch (error) {
     console.error('微信登录出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

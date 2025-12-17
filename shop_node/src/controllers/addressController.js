@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 exports.addAddress = async (req, res) => {
   const { name, phone, province, city, district, detail, is_default } = req.body;
@@ -18,13 +19,10 @@ exports.addAddress = async (req, res) => {
       [user_id, name, phone, province, city, district, detail, is_default || false]
     );
 
-    res.status(201).json({ 
-      message: '地址添加成功', 
-      id: result.insertId 
-    });
+    response.created(res, { id: result.insertId }, '地址添加成功');
   } catch (error) {
     console.error('添加地址出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -36,10 +34,10 @@ exports.getAddresses = async (req, res) => {
       'SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
       [user_id]
     );
-    res.json(addresses);
+    response.success(res, addresses, '获取成功');
   } catch (error) {
     console.error('获取地址列表出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -61,10 +59,10 @@ exports.updateAddress = async (req, res) => {
       [name, phone, province, city, district, detail, is_default, id, user_id]
     );
 
-    res.json({ message: '地址更新成功' });
+    response.success(res, null, '地址更新成功');
   } catch (error) {
     console.error('更新地址出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -74,9 +72,9 @@ exports.deleteAddress = async (req, res) => {
 
   try {
     await db.query('DELETE FROM addresses WHERE id = ? AND user_id = ?', [id, user_id]);
-    res.json({ message: '地址删除成功' });
+    response.success(res, null, '地址删除成功');
   } catch (error) {
     console.error('删除地址出错:', error);
-    res.status(500).json({ message: '服务器错误', error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

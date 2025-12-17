@@ -1,49 +1,65 @@
-# Shop Node Backend
+# 商城后端 API (shop_node)
 
-This is a Node.js backend for a WeChat Mini Program Mall using Express and MySQL.
+Node.js + Express 开发的电商系统后端服务。
 
-## Setup
+## 📋 项目结构
 
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
+```
+shop_node/
+├── src/               # 源代码
+│   ├── app.js         # 应用主文件
+│   ├── config/        # 配置文件
+│   ├── controllers/   # 业务逻辑
+│   ├── middleware/    # 中间件
+│   ├── routes/        # 路由定义
+│   ├── utils/         # 工具函数
+│   └── database/      # 数据库脚本
+├── scripts/           # 脚本
+├── upload/            # 上传文件存储
+├── .env               # 环境配置
+├── index.js           # 入口文件
+└── package.json       # 依赖配置
+```
 
-2.  Configure environment variables:
-    Copy `.env` file and update the database credentials.
-    ```env
-    PORT=3000
-    DB_HOST=localhost
-    DB_USER=root
-    DB_PASSWORD=password
-    DB_NAME=shop_db
-    
-    REDIS_HOST=localhost
-    REDIS_PORT=6379
-    REDIS_PASSWORD=
-    ```
+## 🚀 快速开始
 
-3.  Run the server:
-    - Development:
-        ```bash
-        npm run dev
-        ```
-    - Production:
-        ```bash
-        npm start
-        ```
+### 安装依赖
+```bash
+npm install
+```
 
-## Project Structure
+### 配置环境
+编辑 `.env` 文件配置数据库。
 
--   `src/config`: Database configuration.
--   `src/controllers`: Request handlers.
--   `src/models`: Database models.
--   `src/routes`: API route definitions.
--   `src/app.js`: Express app setup.
--   `index.js`: Server entry point.
+### 初始化数据库
+```bash
+npm run init-db
+```
 
-## API Endpoints
+### 启动服务
+```bash
+npm run dev      # 开发模式
+npm start        # 生产模式
+```
 
--   `GET /`: Welcome message.
--   `GET /api/test/db-check`: Check database connection.
--   `GET /api/test/redis-check`: Check Redis connection.
+服务地址: http://localhost:3000
+
+## 📝 API 文档
+
+Swagger 文档: http://localhost:3000/api-docs
+
+## ✨ 核心特性
+
+✅ 用户认证 (JWT)
+✅ 商品管理
+✅ 购物车操作
+✅ 订单管理
+✅ 地址管理
+✅ 文件上传 (Multer)
+✅ 管理员后台
+✅ MySQL 数据库
+✅ Redis 缓存支持
+
+---
+
+**最后更新**: 2025年12月17日

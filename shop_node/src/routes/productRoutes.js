@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const optionalAuthMiddleware = require('../middleware/optionalAuthMiddleware');
+
+// 使用可选认证中间件，允许未登录用户访问
+router.use(optionalAuthMiddleware);
 
 /**
  * @swagger

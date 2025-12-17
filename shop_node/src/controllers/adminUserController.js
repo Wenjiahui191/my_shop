@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 exports.getUsers = async (req, res) => {
   const { page = 1, limit = 10, search } = req.query;
@@ -30,17 +31,14 @@ exports.getUsers = async (req, res) => {
     const [totalResult] = await db.query(countQuery, countParams);
     const total = totalResult[0].total;
 
-    res.json({
-      data: users,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit),
-      },
+    response.success(res, users, '获取成功', 200, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -48,10 +46,10 @@ exports.getUserById = async (req, res) => {
   try {
     const [users] = await db.query('SELECT id, username, phone, nickname, avatar_url, created_at FROM users WHERE id = ?', [req.params.id]);
     if (users.length === 0) {
-      return res.status(404).json({ error: '用户不存在' });
+      return response.notFound(res, '用户不存在');
     }
-    res.json(users[0]);
+    response.success(res, users[0], '获取成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

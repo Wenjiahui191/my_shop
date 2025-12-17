@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const response = require('../utils/response');
 
 exports.getOrders = async (req, res) => {
   const { page = 1, limit = 10, status, order_no } = req.query;
@@ -43,17 +44,14 @@ exports.getOrders = async (req, res) => {
     const [totalResult] = await db.query(countQuery, countParams);
     const total = totalResult[0].total;
 
-    res.json({
-      data: orders,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit),
-      },
+    response.success(res, orders, '获取成功', 200, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -68,16 +66,16 @@ exports.getOrderById = async (req, res) => {
     `, [id]);
 
     if (orders.length === 0) {
-      return res.status(404).json({ error: '订单不存在' });
+      return response.notFound(res, '订单不存在');
     }
 
     const order = orders[0];
     const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [id]);
     order.items = items;
 
-    res.json(order);
+    response.success(res, order, '获取成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -86,16 +84,16 @@ exports.shipOrder = async (req, res) => {
   const { tracking_number, tracking_company } = req.body;
 
   if (!tracking_number || !tracking_company) {
-    return res.status(400).json({ error: '请提供物流单号和物流公司' });
+    return response.error(res, '请提供物流单号和物流公司', 400);
   }
 
   try {
     const [orders] = await db.query('SELECT status FROM orders WHERE id = ?', [id]);
     if (orders.length === 0) {
-      return res.status(404).json({ error: '订单不存在' });
+      return response.notFound(res, '订单不存在');
     }
     if (orders[0].status !== 'paid') {
-      return res.status(400).json({ error: '仅已支付订单可发货' });
+      return response.error(res, '仅已支付订单可发货', 400);
     }
 
     await db.query(
@@ -103,8 +101,8 @@ exports.shipOrder = async (req, res) => {
       ['shipped', tracking_number, tracking_company, id]
     );
 
-    res.json({ message: '发货成功' });
+    response.success(res, null, '发货成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

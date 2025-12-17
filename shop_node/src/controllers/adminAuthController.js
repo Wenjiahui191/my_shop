@@ -1,13 +1,14 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const response = require('../utils/response');
 
 exports.login = async (req, res) => {
   const { username, password } = req.body;
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
-    return res.status(500).json({ error: '服务器未配置 JWT_SECRET' });
+    return response.error(res, '服务器未配置 JWT_SECRET', 500);
   }
 
   try {
@@ -15,21 +16,21 @@ exports.login = async (req, res) => {
     const admin = admins[0];
 
     if (!admin) {
-      return res.status(401).json({ error: '账号或密码错误' });
+      return response.error(res, '账号或密码错误', 401);
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.status(401).json({ error: '账号或密码错误' });
+      return response.error(res, '账号或密码错误', 401);
     }
 
     const token = jwt.sign({ id: admin.id, username: admin.username, role: admin.role }, jwtSecret, {
       expiresIn: '24h',
     });
 
-    res.json({ token });
+    response.success(res, { token }, '登录成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };
 
@@ -37,10 +38,10 @@ exports.getProfile = async (req, res) => {
   try {
     const [admins] = await db.query('SELECT id, username, role, created_at FROM admins WHERE id = ?', [req.admin.id]);
     if (admins.length === 0) {
-      return res.status(404).json({ error: '管理员不存在' });
+      return response.notFound(res, '管理员不存在');
     }
-    res.json(admins[0]);
+    response.success(res, admins[0], '获取成功');
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.error(res, '服务器错误', 500, error);
   }
 };

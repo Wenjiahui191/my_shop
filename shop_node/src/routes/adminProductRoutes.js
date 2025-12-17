@@ -13,6 +13,47 @@ const adminAuthMiddleware = require('../middleware/adminAuthMiddleware');
 /**
  * @swagger
  * /admin/products:
+ *   get:
+ *     summary: 获取商品列表（包括上架和下架）
+ *     tags: [AdminProducts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: 页码
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: 每页数量
+ *       - in: query
+ *         name: category_id
+ *         schema:
+ *           type: integer
+ *         description: 分类ID筛选
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [on_shelf, off_shelf]
+ *         description: 商品状态筛选
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: 搜索名称或描述
+ *     responses:
+ *       200:
+ *         description: 商品列表
+ */
+router.get('/', adminAuthMiddleware, adminProductController.getProducts);
+
+/**
+ * @swagger
+ * /admin/products:
  *   post:
  *     summary: 创建商品
  *     tags: [AdminProducts]

@@ -23,6 +23,11 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 静态文件服务：上传文件目录
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../upload')));
+
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -50,6 +55,7 @@ const adminOrderRoutes = require('./routes/adminOrderRoutes');
 const adminCategoryRoutes = require('./routes/adminCategoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 
@@ -62,12 +68,11 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/categories', adminCategoryRoutes);
-// const productRoutes = require('./routes/productRoutes');
-// app.use('/api/products', productRoutes);
 
 module.exports = app;

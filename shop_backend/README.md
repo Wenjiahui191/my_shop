@@ -1,5 +1,63 @@
-# Vue 3 + Vite
+# 商城管理后台 (shop_backend)
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite + Element Plus 开发的电商管理系统。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 🚀 快速开始
+
+### 安装依赖
+```bash
+npm install
+```
+
+### 配置环境
+创建 `.env.local`:
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+### 启动开发
+```bash
+npm run dev
+```
+
+访问 http://localhost:5173
+
+### 构建生产
+```bash
+npm run build
+```
+
+## ✨ 主要功能
+
+✅ 商品管理（CRUD + 图片上传）
+✅ 分类管理（多级分类）
+✅ 订单管理（查询、发货）
+✅ 用户管理
+✅ 仪表板（数据统计）
+✅ 管理员认证
+
+## 🎨 技术栈
+
+- Vue 3
+- Vite
+- Element Plus
+- Pinia
+- Axios
+
+## 📁 项目结构
+
+```
+src/
+├── api/           # API 调用
+├── components/    # 组件
+├── layouts/       # 布局
+├── router/        # 路由
+├── stores/        # 状态管理
+├── utils/         # 工具函数
+├── views/         # 页面
+└── App.vue        # 根组件
+```
+
+---
+
+**最后更新**: 2025年12月17日
