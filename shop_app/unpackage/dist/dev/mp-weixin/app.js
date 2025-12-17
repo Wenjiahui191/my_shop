@@ -37,43 +37,6 @@ const _sfc_main = {
       this.updateTabBar();
     },
     updateTabBar() {
-      const list = [
-        {
-          pagePath: "pages/index/index",
-          text: "首页",
-          iconPath: "static/tabbar/home.png",
-          selectedIconPath: "static/tabbar/home-active.png"
-        },
-        {
-          pagePath: "pages/category/category",
-          text: "分类",
-          iconPath: "static/tabbar/category.png",
-          selectedIconPath: "static/tabbar/category-active.png"
-        }
-      ];
-      if (this.isLogin) {
-        list.push({
-          pagePath: "pages/cart/cart",
-          text: "购物车",
-          iconPath: "static/tabbar/cart.png",
-          selectedIconPath: "static/tabbar/cart-active.png"
-        });
-      }
-      list.push({
-        pagePath: "pages/user/user",
-        text: "我的",
-        iconPath: "static/tabbar/user.png",
-        selectedIconPath: "static/tabbar/user-active.png"
-      });
-      common_vendor.index.setTabBarItem({
-        index: list.length - 1,
-        text: "我的",
-        iconPath: "static/tabbar/user.png",
-        selectedIconPath: "static/tabbar/user-active.png"
-      });
-      common_vendor.index.setTabBar({
-        list
-      });
     }
   }
 };

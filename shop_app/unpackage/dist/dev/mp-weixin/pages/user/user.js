@@ -37,7 +37,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.user
   }, $data.user ? {
-    b: common_assets._imports_0,
+    b: $data.user.avatar_url || "/static/logo.png",
     c: common_vendor.t($data.user.nickname || $data.user.username),
     d: common_vendor.t($data.user.phone)
   } : {

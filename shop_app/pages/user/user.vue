@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="user-info" v-if="user">
-      <image class="avatar" src="/static/logo.png"></image>
+      <image class="avatar" :src="user.avatar_url || '/static/logo.png'"></image>
       <view class="info">
         <view class="nickname">{{ user.nickname || user.username }}</view>
         <view class="phone">{{ user.phone }}</view>

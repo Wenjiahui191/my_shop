@@ -108,7 +108,7 @@ exports.getMe = async (req, res) => {
 };
 
 exports.wechatLogin = async (req, res) => {
-  const { code, nickname, avatar_url } = req.body;
+  const { code, nickname, avatar_url, phone } = req.body;
 
   if (!code) {
     return response.error(res, '缺少微信登录 code', 400);
@@ -139,39 +139,42 @@ exports.wechatLogin = async (req, res) => {
 
     const openid = data.openid;
 
-    const [users] = await db.query('SELECT * FROM users WHERE openid = ?', [
-      openid
-    ]);
 
+    const [users] = await db.query('SELECT * FROM users WHERE openid = ?', [openid]);
     let user;
-
     if (users.length === 0) {
+      const safeNickname = typeof nickname === 'string' ? nickname : '';
+      const safeAvatar = typeof avatar_url === 'string' ? avatar_url : '';
+      const safePhone = typeof phone === 'string' ? phone : null;
+      const safeUsername = safeNickname;
       const [result] = await db.query(
-        'INSERT INTO users (openid, nickname, avatar_url) VALUES (?, ?, ?)',
-        [openid, nickname || '', avatar_url || '']
+        'INSERT INTO users (openid, username, nickname, avatar_url, phone) VALUES (?, ?, ?, ?, ?)',
+        [openid, safeUsername, safeNickname, safeAvatar, safePhone]
       );
-
       user = {
         id: result.insertId,
-        username: null,
-        phone: null,
-        nickname: nickname || '',
-        avatar_url: avatar_url || ''
+        username: safeUsername,
+        phone: safePhone,
+        nickname: safeNickname,
+        avatar_url: safeAvatar
       };
     } else {
       user = users[0];
-
       const nextNickname = nickname || user.nickname;
       const nextAvatar = avatar_url || user.avatar_url;
-
-      if (nextNickname !== user.nickname || nextAvatar !== user.avatar_url) {
+      const nextPhone = phone || user.phone;
+      if (
+        nextNickname !== user.nickname ||
+        nextAvatar !== user.avatar_url ||
+        nextPhone !== user.phone
+      ) {
         await db.query(
-          'UPDATE users SET nickname = ?, avatar_url = ? WHERE id = ?',
-          [nextNickname, nextAvatar, user.id]
+          'UPDATE users SET nickname = ?, avatar_url = ?, phone = ? WHERE id = ?',
+          [nextNickname, nextAvatar, nextPhone, user.id]
         );
-
         user.nickname = nextNickname;
         user.avatar_url = nextAvatar;
+        user.phone = nextPhone;
       }
     }
 
